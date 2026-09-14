@@ -52,6 +52,10 @@ export interface AppData {
   exercises: Record<string, ExerciseState>;
   history: HistoryRecord[];
   progressionHistory: ProgressionRecord[];
+  /** Per-day-type exercise lists, when the user has swapped away from the defaults. */
+  dayExercises?: Partial<Record<DayType, string[]>>;
+  /** User-added exercises, keyed by generated id, merged with the built-in library. */
+  customExercises?: Record<string, ExerciseInfo>;
 }
 
 export const emptyData = (): AppData => ({

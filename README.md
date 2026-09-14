@@ -27,29 +27,48 @@ run web` also works for a quick browser preview.
   instead of a weight.
 - **History and Progress tabs**: a log of past sessions and a simple bar
   trend per lifted exercise.
+- **Exercise substitution**: tap the swap icon on any exercise during a
+  workout to replace it with another from the library, or add a brand-new
+  one (name, muscle group, equipment, and whether it's tracked by weight or
+  band level). Swaps stick for that day type going forward.
+- **Sunday reminder**: a local notification fires every Sunday at 9am
+  prompting the check-in. Scheduled automatically on first launch (after
+  you grant notification permission) — no backend involved.
 
 ## Project structure
 
 ```
-App.tsx                 # top-level state, check-in/data flow, screen routing
+App.tsx                    # top-level state, check-in/data flow, screen routing
 src/
-  data/exercises.ts      # exercise library + which exercises belong to each day
-  screens/                # Checkin, Home, WorkoutLog, History, Progress
-  storage.ts              # AsyncStorage persistence
-  theme.ts                # color palette
-  types.ts                # data model
-  utils/date.ts           # week/date helpers (weeks run Sunday–Saturday)
+  data/exercises.ts         # built-in exercise library + default day exercise lists
+  notifications.ts           # schedules the weekly Sunday check-in reminder
+  screens/                   # Checkin, Home, WorkoutLog, History, Progress, ExerciseSwapModal
+  storage.ts                 # AsyncStorage persistence
+  theme.ts                   # color palette
+  types.ts                   # data model
+  utils/date.ts              # week/date helpers (weeks run Sunday–Saturday)
+  utils/exercises.ts         # merges built-in + custom exercises and per-day overrides
 ```
 
 ## Customizing exercises
 
-Swap or add exercises by editing `src/data/exercises.ts` — add an entry to
-`EXERCISE_INFO` and reference its id in `DAY_EXERCISES`. There's no in-app
-exercise-swap UI yet.
+You don't need to touch code — tap the swap icon next to any exercise in a
+workout to pick a different one from the library, or add a custom exercise
+on the fly. To change the built-in library or the default day-type lineups,
+edit `src/data/exercises.ts` (`EXERCISE_INFO` / `DAY_EXERCISES`).
+
+## Sunday reminder notes
+
+- Local notifications work fine in Expo Go, but you do need to test on a
+  real device or simulator (not the web preview) to see the permission
+  prompt and confirm delivery.
+- The reminder time (Sunday, 9:00am, device-local time) is hardcoded in
+  `src/notifications.ts` — change `REMINDER_HOUR/REMINDER_MINUTE` there if
+  you want a different time.
+- If you ever run `npx expo prebuild` / build with EAS, the
+  `expo-notifications` config plugin in `app.json` is already wired up so
+  the required Android permission gets added.
 
 ## Not yet built
 
-- Push notification for the Sunday check-in (currently only appears when you
-  open the app after a new week has started).
 - Cross-device sync (data is local to whichever phone you use).
-- In-app exercise substitution UI.

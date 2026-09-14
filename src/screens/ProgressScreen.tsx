@@ -1,26 +1,26 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors } from "../theme";
-import { EXERCISE_INFO } from "../data/exercises";
-import type { ExerciseState, HistoryRecord } from "../types";
+import type { ExerciseInfo, ExerciseState, HistoryRecord } from "../types";
 import { formatDate } from "../utils/date";
 import BackHeader from "./BackHeader";
 
 interface Props {
   history: HistoryRecord[];
   exercises: Record<string, ExerciseState>;
+  exerciseInfo: Record<string, ExerciseInfo>;
   onBack: () => void;
 }
 
-export default function ProgressScreen({ history, exercises, onBack }: Props) {
-  const ids = Object.keys(exercises).filter((id) => EXERCISE_INFO[id]?.unit === "lbs");
+export default function ProgressScreen({ history, exercises, exerciseInfo, onBack }: Props) {
+  const ids = Object.keys(exercises).filter((id) => exerciseInfo[id]?.unit === "lbs");
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <BackHeader onBack={onBack} title="Progress" />
       {ids.length === 0 && <Text style={styles.empty}>Log a few workouts to see trends here.</Text>}
       {ids.map((id) => {
-        const info = EXERCISE_INFO[id];
+        const info = exerciseInfo[id];
         const points = history
           .filter((h) => h.entries.some((e) => e.id === id))
           .map((h) => ({ date: h.date, weight: h.entries.find((e) => e.id === id)!.weight }))

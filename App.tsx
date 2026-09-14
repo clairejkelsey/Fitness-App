@@ -3,11 +3,12 @@ import { ActivityIndicator, StatusBar, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "./src/theme";
-import { EXERCISE_INFO } from "./src/data/exercises";
 import { loadData, saveData } from "./src/storage";
 import { emptyData } from "./src/types";
-import type { AppData, CurrentWeek, DayType, HistoryEntry } from "./src/types";
+import type { AppData, CurrentWeek, DayType, ExerciseInfo, HistoryEntry } from "./src/types";
 import { mostRecentSunday, toISODate, weekIndexFor } from "./src/utils/date";
+import { getAllExerciseInfo, getDayExerciseIds, makeExerciseId } from "./src/utils/exercises";
+import { ensureSundayCheckinReminder } from "./src/notifications";
 
 import CheckinScreen from "./src/screens/CheckinScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -49,6 +50,7 @@ export default function App() {
         setView("home");
       }
       setLoading(false);
+      ensureSundayCheckinReminder();
     })();
   }, []);
 
@@ -84,7 +86,7 @@ export default function App() {
     const exercises = { ...data.exercises };
     let progressionHistory = data.progressionHistory;
     if (decisions) {
-      Object.entries(EXERCISE_INFO).forEach(([id, info]) => {
+      Object.entries(getAllExerciseInfo(data)).forEach(([id, info]) => {
         if (info.unit !== "lbs") return;
         const wantsIncrease = decisions[info.category];
         if (wantsIncrease && exercises[id]?.weight) {
@@ -135,6 +137,33 @@ export default function App() {
     setView("home");
   }
 
+  function normalizedDayExercises(d: AppData): Record<DayType, string[]> {
+    return {
+      upper: getDayExerciseIds(d, "upper"),
+      lower: getDayExerciseIds(d, "lower"),
+      full: getDayExerciseIds(d, "full"),
+    };
+  }
+
+  function swapExercise(dayType: DayType, oldId: string, newId: string) {
+    const currentList = getDayExerciseIds(data, dayType);
+    if (!currentList.includes(oldId) || currentList.includes(newId)) return;
+    const nextList = currentList.map((id) => (id === oldId ? newId : id));
+    const dayExercises = { ...normalizedDayExercises(data), [dayType]: nextList };
+    persist({ ...data, dayExercises });
+  }
+
+  function addCustomExerciseAndSwap(dayType: DayType, oldId: string, info: ExerciseInfo) {
+    const id = makeExerciseId(info.name);
+    const customExercises = { ...(data.customExercises ?? {}), [id]: info };
+    const currentList = getDayExerciseIds(data, dayType);
+    const nextList = currentList.includes(oldId)
+      ? currentList.map((x) => (x === oldId ? id : x))
+      : [...currentList, id];
+    const dayExercises = { ...normalizedDayExercises(data), [dayType]: nextList };
+    persist({ ...data, customExercises, dayExercises });
+  }
+
   let content: React.ReactNode;
 
   if (loading) {
@@ -156,18 +185,29 @@ export default function App() {
     content = (
       <WorkoutLogScreen
         dayType={activeDayType}
+        ids={getDayExerciseIds(data, activeDayType)}
+        exerciseInfo={getAllExerciseInfo(data)}
         existingExercises={data.exercises}
         onCancel={() => {
           setActiveDayType(null);
           setView("home");
         }}
         onFinish={(entries) => finishWorkout(activeDayType, entries)}
+        onSwapExercise={(oldId, newId) => swapExercise(activeDayType, oldId, newId)}
+        onAddCustomExercise={(oldId, info) => addCustomExerciseAndSwap(activeDayType, oldId, info)}
       />
     );
   } else if (view === "history") {
     content = <HistoryScreen history={data.history} onBack={() => setView("home")} />;
   } else if (view === "progress") {
-    content = <ProgressScreen history={data.history} exercises={data.exercises} onBack={() => setView("home")} />;
+    content = (
+      <ProgressScreen
+        history={data.history}
+        exercises={data.exercises}
+        exerciseInfo={getAllExerciseInfo(data)}
+        onBack={() => setView("home")}
+      />
+    );
   } else if (data.currentWeek) {
     content = (
       <HomeScreen

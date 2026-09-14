@@ -2,9 +2,10 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Check, ChevronRight, ClipboardList, Dumbbell, TrendingUp } from "lucide-react-native";
 import { colors } from "../theme";
-import { DAY_EXERCISES, DAY_META } from "../data/exercises";
+import { DAY_META } from "../data/exercises";
 import type { AppData, DayType } from "../types";
 import { formatDateRange } from "../utils/date";
+import { getDayExerciseIds } from "../utils/exercises";
 
 interface Props {
   data: AppData;
@@ -37,7 +38,7 @@ export default function HomeScreen({ data, saving, onStart, onHistory, onProgres
             <View style={{ flex: 1 }}>
               <Text style={styles.dayLabel}>{meta.label}</Text>
               <Text style={styles.daySubtitle}>
-                {done ? "Completed this week" : `${DAY_EXERCISES[dt].length} exercises · ~30–40 min`}
+                {done ? "Completed this week" : `${getDayExerciseIds(data, dt).length} exercises · ~30–40 min`}
               </Text>
             </View>
             <ChevronRight color={colors.inkSoft} size={18} />
