@@ -22,8 +22,8 @@ export default function ProgressScreen({ history, exercises, exerciseInfo, onBac
       {ids.map((id) => {
         const info = exerciseInfo[id];
         const points = history
-          .filter((h) => h.entries.some((e) => e.id === id))
-          .map((h) => ({ date: h.date, weight: h.entries.find((e) => e.id === id)!.weight }))
+          .map((h) => ({ date: h.date, weight: h.entries.find((e) => e.id === id)?.weight }))
+          .filter((p): p is { date: string; weight: number } => p.weight != null)
           .reverse()
           .slice(-6);
         if (points.length === 0) return null;

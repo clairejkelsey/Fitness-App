@@ -22,9 +22,12 @@ run web` also works for a quick browser preview.
   3 days → upper/lower/full-body strength, 4 days → upper/lower only.
 - **Progressive overload**: every 4th week, a second check-in step asks
   separately whether to add 5 lbs to upper and lower working weights.
-- **Workout logging**: weight per exercise (prefilled from your last
-  session), 3 sets of reps; band-based exercises take a text "band level"
-  instead of a weight.
+- **Workout logging**: exercises are grouped into supersets of 2, paired by
+  body part (e.g. Chest & Back, Quads & Hamstrings) instead of one long
+  list — alternate between the pair, then rest. Weight per exercise is
+  prefilled from your last session, or a generic intermediate-lifter
+  starting suggestion the first time; 3 sets of reps; band-based exercises
+  take a text "band level" instead of a weight.
 - **History and Progress tabs**: a log of past sessions and a simple bar
   trend per lifted exercise.
 - **Exercise substitution**: tap the swap icon on any exercise during a
@@ -54,8 +57,18 @@ src/
 
 You don't need to touch code — tap the swap icon next to any exercise in a
 workout to pick a different one from the library, or add a custom exercise
-on the fly. To change the built-in library or the default day-type lineups,
-edit `src/data/exercises.ts` (`EXERCISE_INFO` / `DAY_EXERCISES`).
+on the fly. To change the built-in library, the superset groupings, or the
+suggested starting weights, edit `src/data/exercises.ts` (`EXERCISE_INFO` /
+`DAY_BLOCKS`).
+
+## About the suggested weights
+
+`EXERCISE_INFO[...].defaultWeight` in `src/data/exercises.ts` holds generic
+starting-weight suggestions for an intermediate lifter, used only until you
+log a real session (after that, it prefills from your last actual weight).
+These are rough guesses, not a personalized program — adjust freely, and
+especially reconsider them alongside whatever your care provider or trainer
+recommends given trimester-to-trimester changes.
 
 ## Sunday reminder notes
 

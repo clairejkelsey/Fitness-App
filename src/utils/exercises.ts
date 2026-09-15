@@ -1,12 +1,16 @@
-import { DAY_EXERCISES, EXERCISE_INFO } from "../data/exercises";
-import type { AppData, DayType, ExerciseInfo } from "../types";
+import { DAY_BLOCKS, EXERCISE_INFO } from "../data/exercises";
+import type { AppData, DayType, ExerciseBlock, ExerciseInfo } from "../types";
 
 export function getAllExerciseInfo(data: AppData): Record<string, ExerciseInfo> {
   return { ...EXERCISE_INFO, ...(data.customExercises ?? {}) };
 }
 
+export function getDayBlocks(data: AppData, dayType: DayType): ExerciseBlock[] {
+  return data.dayExercises?.[dayType] ?? DAY_BLOCKS[dayType];
+}
+
 export function getDayExerciseIds(data: AppData, dayType: DayType): string[] {
-  return data.dayExercises?.[dayType] ?? DAY_EXERCISES[dayType];
+  return getDayBlocks(data, dayType).flatMap((block) => block.exerciseIds);
 }
 
 export function makeExerciseId(name: string): string {

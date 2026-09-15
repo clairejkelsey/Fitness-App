@@ -5,9 +5,9 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "./src/theme";
 import { loadData, saveData } from "./src/storage";
 import { emptyData } from "./src/types";
-import type { AppData, CurrentWeek, DayType, ExerciseInfo, HistoryEntry } from "./src/types";
+import type { AppData, CurrentWeek, DayType, ExerciseBlock, ExerciseInfo, HistoryEntry } from "./src/types";
 import { mostRecentSunday, toISODate, weekIndexFor } from "./src/utils/date";
-import { getAllExerciseInfo, getDayExerciseIds, makeExerciseId } from "./src/utils/exercises";
+import { getAllExerciseInfo, getDayBlocks, makeExerciseId } from "./src/utils/exercises";
 import { ensureSundayCheckinReminder } from "./src/notifications";
 
 import CheckinScreen from "./src/screens/CheckinScreen";
@@ -89,8 +89,9 @@ export default function App() {
       Object.entries(getAllExerciseInfo(data)).forEach(([id, info]) => {
         if (info.unit !== "lbs") return;
         const wantsIncrease = decisions[info.category];
-        if (wantsIncrease && exercises[id]?.weight) {
-          exercises[id] = { ...exercises[id], weight: exercises[id].weight + 5 };
+        const current = exercises[id];
+        if (wantsIncrease && current?.weight != null) {
+          exercises[id] = { ...current, weight: current.weight + 5 };
         }
       });
       progressionHistory = [
@@ -119,7 +120,7 @@ export default function App() {
     if (!data.currentWeek) return;
     const exercises = { ...data.exercises };
     entries.forEach((e) => {
-      exercises[e.id] = { weight: e.weight, repLow: 8, repHigh: 12 };
+      exercises[e.id] = { weight: e.weight, bandLevel: e.bandLevel, repLow: 8, repHigh: 12 };
     });
     const historyEntry = {
       date: toISODate(new Date()),
@@ -137,30 +138,35 @@ export default function App() {
     setView("home");
   }
 
-  function normalizedDayExercises(d: AppData): Record<DayType, string[]> {
+  function normalizedDayExercises(d: AppData): Record<DayType, ExerciseBlock[]> {
     return {
-      upper: getDayExerciseIds(d, "upper"),
-      lower: getDayExerciseIds(d, "lower"),
-      full: getDayExerciseIds(d, "full"),
+      upper: getDayBlocks(d, "upper"),
+      lower: getDayBlocks(d, "lower"),
+      full: getDayBlocks(d, "full"),
     };
   }
 
+  function replaceInBlocks(blocks: ExerciseBlock[], oldId: string, newId: string): ExerciseBlock[] {
+    return blocks.map((block) =>
+      block.exerciseIds.includes(oldId)
+        ? { ...block, exerciseIds: block.exerciseIds.map((id) => (id === oldId ? newId : id)) }
+        : block
+    );
+  }
+
   function swapExercise(dayType: DayType, oldId: string, newId: string) {
-    const currentList = getDayExerciseIds(data, dayType);
-    if (!currentList.includes(oldId) || currentList.includes(newId)) return;
-    const nextList = currentList.map((id) => (id === oldId ? newId : id));
-    const dayExercises = { ...normalizedDayExercises(data), [dayType]: nextList };
+    const blocks = getDayBlocks(data, dayType);
+    const allIds = blocks.flatMap((b) => b.exerciseIds);
+    if (!allIds.includes(oldId) || allIds.includes(newId)) return;
+    const dayExercises = { ...normalizedDayExercises(data), [dayType]: replaceInBlocks(blocks, oldId, newId) };
     persist({ ...data, dayExercises });
   }
 
   function addCustomExerciseAndSwap(dayType: DayType, oldId: string, info: ExerciseInfo) {
     const id = makeExerciseId(info.name);
     const customExercises = { ...(data.customExercises ?? {}), [id]: info };
-    const currentList = getDayExerciseIds(data, dayType);
-    const nextList = currentList.includes(oldId)
-      ? currentList.map((x) => (x === oldId ? id : x))
-      : [...currentList, id];
-    const dayExercises = { ...normalizedDayExercises(data), [dayType]: nextList };
+    const blocks = getDayBlocks(data, dayType);
+    const dayExercises = { ...normalizedDayExercises(data), [dayType]: replaceInBlocks(blocks, oldId, id) };
     persist({ ...data, customExercises, dayExercises });
   }
 
@@ -185,7 +191,7 @@ export default function App() {
     content = (
       <WorkoutLogScreen
         dayType={activeDayType}
-        ids={getDayExerciseIds(data, activeDayType)}
+        blocks={getDayBlocks(data, activeDayType)}
         exerciseInfo={getAllExerciseInfo(data)}
         existingExercises={data.exercises}
         onCancel={() => {

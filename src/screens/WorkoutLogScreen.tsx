@@ -3,12 +3,12 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput
 import { ArrowLeft, RefreshCw } from "lucide-react-native";
 import { colors } from "../theme";
 import { DAY_META } from "../data/exercises";
-import type { Category, DayType, ExerciseInfo, ExerciseState, HistoryEntry } from "../types";
+import type { Category, DayType, ExerciseBlock, ExerciseInfo, ExerciseState, HistoryEntry } from "../types";
 import ExerciseSwapModal from "./ExerciseSwapModal";
 
 interface Props {
   dayType: DayType;
-  ids: string[];
+  blocks: ExerciseBlock[];
   exerciseInfo: Record<string, ExerciseInfo>;
   existingExercises: Record<string, ExerciseState>;
   onCancel: () => void;
@@ -22,9 +22,22 @@ interface FormRow {
   reps: [string, string, string];
 }
 
+function initialRow(id: string, info: ExerciseInfo | undefined, existingExercises: Record<string, ExerciseState>): FormRow {
+  const existing = existingExercises[id];
+  let weight = "";
+  if (info?.unit === "band") {
+    weight = existing?.bandLevel ?? "";
+  } else if (existing?.weight != null) {
+    weight = String(existing.weight);
+  } else if (info?.defaultWeight != null) {
+    weight = String(info.defaultWeight);
+  }
+  return { weight, reps: ["", "", ""] };
+}
+
 export default function WorkoutLogScreen({
   dayType,
-  ids,
+  blocks,
   exerciseInfo,
   existingExercises,
   onCancel,
@@ -32,17 +45,10 @@ export default function WorkoutLogScreen({
   onSwapExercise,
   onAddCustomExercise,
 }: Props) {
+  const ids = blocks.flatMap((b) => b.exerciseIds);
   const idsKey = ids.join(",");
   const [form, setForm] = useState<Record<string, FormRow>>(() =>
-    Object.fromEntries(
-      ids.map((id) => [
-        id,
-        {
-          weight: existingExercises[id]?.weight ? String(existingExercises[id].weight) : "",
-          reps: ["", "", ""] as [string, string, string],
-        },
-      ])
-    )
+    Object.fromEntries(ids.map((id) => [id, initialRow(id, exerciseInfo[id], existingExercises)]))
   );
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
 
@@ -52,10 +58,7 @@ export default function WorkoutLogScreen({
       if (sameKeys) return prev;
       const next: Record<string, FormRow> = {};
       ids.forEach((id) => {
-        next[id] = prev[id] ?? {
-          weight: existingExercises[id]?.weight ? String(existingExercises[id].weight) : "",
-          reps: ["", "", ""],
-        };
+        next[id] = prev[id] ?? initialRow(id, exerciseInfo[id], existingExercises);
       });
       return next;
     });
@@ -80,16 +83,15 @@ export default function WorkoutLogScreen({
       const info = exerciseInfo[id];
       const row = form[id];
       if (!info || !row) return;
-      const raw = row.weight;
-      const num = parseFloat(raw);
-      if (raw !== "" && !isNaN(num)) {
-        entries.push({
-          id,
-          name: info.name,
-          weight: num,
-          unit: info.unit,
-          sets: row.reps.filter((r) => r !== "").map((r) => parseInt(r, 10)),
-        });
+      const raw = row.weight.trim();
+      if (raw === "") return;
+      const sets = row.reps.filter((r) => r !== "").map((r) => parseInt(r, 10));
+      if (info.unit === "lbs") {
+        const num = parseFloat(raw);
+        if (isNaN(num)) return;
+        entries.push({ id, name: info.name, weight: num, unit: info.unit, sets });
+      } else {
+        entries.push({ id, name: info.name, weight: null, bandLevel: raw, unit: info.unit, sets });
       }
     });
     onFinish(entries);
@@ -107,64 +109,73 @@ export default function WorkoutLogScreen({
           <Text style={styles.backLabel}>Back</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: meta.accent }]}>{meta.label}</Text>
-        <Text style={styles.subtitle}>3 sets · 8–12 reps · pick a challenging weight</Text>
+        <Text style={styles.subtitle}>Suggested weights are a starting point — adjust to what feels right</Text>
 
-        {ids.map((id) => {
-          const info = exerciseInfo[id];
-          const row = form[id];
-          if (!info || !row) return null;
-          return (
-            <View key={id} style={styles.exerciseCard}>
-              <View style={styles.exerciseHeaderRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.exerciseName}>{info.name}</Text>
-                  <Text style={styles.exerciseMeta}>
-                    {info.muscle} · {info.equipment}
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => setSwapTargetId(id)} style={styles.swapButton} hitSlop={8}>
-                  <RefreshCw size={16} color={colors.inkSoft} />
-                </TouchableOpacity>
-              </View>
-
-              {info.unit === "lbs" ? (
-                <View style={styles.weightRow}>
-                  <TextInput
-                    keyboardType="decimal-pad"
-                    placeholder="Weight"
-                    placeholderTextColor={colors.placeholder}
-                    value={row.weight}
-                    onChangeText={(v) => updateWeight(id, v)}
-                    style={styles.input}
-                  />
-                  <Text style={styles.unitLabel}>lbs</Text>
-                </View>
-              ) : (
-                <TextInput
-                  placeholder="Band level (e.g. medium / blue)"
-                  placeholderTextColor={colors.placeholder}
-                  value={row.weight}
-                  onChangeText={(v) => updateWeight(id, v)}
-                  style={[styles.input, styles.fullWidthInput]}
-                />
-              )}
-
-              <View style={styles.repsRow}>
-                {[0, 1, 2].map((i) => (
-                  <TextInput
-                    key={i}
-                    keyboardType="number-pad"
-                    placeholder={`Set ${i + 1} reps`}
-                    placeholderTextColor={colors.placeholder}
-                    value={row.reps[i]}
-                    onChangeText={(v) => updateReps(id, i, v)}
-                    style={[styles.input, styles.repInput]}
-                  />
-                ))}
-              </View>
+        {blocks.map((block, blockIndex) => (
+          <View key={block.label + blockIndex} style={styles.block}>
+            <View style={styles.blockHeader}>
+              <Text style={[styles.blockLabel, { color: meta.accent }]}>{block.label}</Text>
+              <Text style={styles.blockHint}>Superset · alternate, rest after both</Text>
             </View>
-          );
-        })}
+
+            {block.exerciseIds.map((id) => {
+              const info = exerciseInfo[id];
+              const row = form[id];
+              if (!info || !row) return null;
+              return (
+                <View key={id} style={styles.exerciseCard}>
+                  <View style={styles.exerciseHeaderRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.exerciseName}>{info.name}</Text>
+                      <Text style={styles.exerciseMeta}>
+                        {info.muscle} · {info.equipment}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setSwapTargetId(id)} style={styles.swapButton} hitSlop={8}>
+                      <RefreshCw size={16} color={colors.inkSoft} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {info.unit === "lbs" ? (
+                    <View style={styles.weightRow}>
+                      <TextInput
+                        keyboardType="decimal-pad"
+                        placeholder="Weight"
+                        placeholderTextColor={colors.placeholder}
+                        value={row.weight}
+                        onChangeText={(v) => updateWeight(id, v)}
+                        style={styles.input}
+                      />
+                      <Text style={styles.unitLabel}>lbs</Text>
+                    </View>
+                  ) : (
+                    <TextInput
+                      placeholder="Band level (e.g. medium / blue)"
+                      placeholderTextColor={colors.placeholder}
+                      value={row.weight}
+                      onChangeText={(v) => updateWeight(id, v)}
+                      style={[styles.input, styles.fullWidthInput]}
+                    />
+                  )}
+
+                  <View style={styles.repsRow}>
+                    {[0, 1, 2].map((i) => (
+                      <TextInput
+                        key={i}
+                        keyboardType="number-pad"
+                        placeholder={`Set ${i + 1} reps`}
+                        placeholderTextColor={colors.placeholder}
+                        value={row.reps[i]}
+                        onChangeText={(v) => updateReps(id, i, v)}
+                        style={[styles.input, styles.repInput]}
+                      />
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ))}
 
         <TouchableOpacity onPress={handleFinish} style={styles.finishButton}>
           <Text style={styles.finishButtonText}>Finish workout</Text>
@@ -197,7 +208,11 @@ const styles = StyleSheet.create({
   backRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 },
   backLabel: { fontSize: 14, color: colors.inkSoft },
   title: { fontSize: 24, fontWeight: "700" },
-  subtitle: { color: colors.inkSoft, fontSize: 14, marginBottom: 24 },
+  subtitle: { color: colors.inkSoft, fontSize: 14, marginBottom: 20 },
+  block: { marginBottom: 10 },
+  blockHeader: { marginBottom: 10 },
+  blockLabel: { fontSize: 15, fontWeight: "700" },
+  blockHint: { fontSize: 12, color: colors.inkSoft, marginTop: 1 },
   exerciseCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,

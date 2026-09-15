@@ -8,12 +8,22 @@ export interface ExerciseInfo {
   equipment: string;
   category: Category;
   unit: Unit;
+  /** Suggested starting weight (lbs) for an intermediate lifter, used to prefill before any history exists. */
+  defaultWeight?: number;
 }
 
 export interface ExerciseState {
-  weight: number;
+  /** null for band-based exercises, which are tracked by bandLevel instead. */
+  weight: number | null;
+  bandLevel?: string;
   repLow: number;
   repHigh: number;
+}
+
+/** A small group of exercises performed as a superset (back-to-back, then rest). */
+export interface ExerciseBlock {
+  label: string;
+  exerciseIds: string[];
 }
 
 export interface CurrentWeek {
@@ -27,7 +37,8 @@ export interface CurrentWeek {
 export interface HistoryEntry {
   id: string;
   name: string;
-  weight: number;
+  weight: number | null;
+  bandLevel?: string;
   unit: Unit;
   sets: number[];
 }
@@ -52,8 +63,8 @@ export interface AppData {
   exercises: Record<string, ExerciseState>;
   history: HistoryRecord[];
   progressionHistory: ProgressionRecord[];
-  /** Per-day-type exercise lists, when the user has swapped away from the defaults. */
-  dayExercises?: Partial<Record<DayType, string[]>>;
+  /** Per-day-type exercise blocks, when the user has swapped away from the defaults. */
+  dayExercises?: Partial<Record<DayType, ExerciseBlock[]>>;
   /** User-added exercises, keyed by generated id, merged with the built-in library. */
   customExercises?: Record<string, ExerciseInfo>;
 }

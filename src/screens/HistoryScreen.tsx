@@ -28,8 +28,7 @@ export default function HistoryScreen({ history, onBack }: Props) {
             </View>
             {h.entries.map((e) => (
               <Text key={e.id} style={styles.entryLine}>
-                {e.name}: {e.weight}
-                {e.unit === "lbs" ? " lbs" : ""} × [{e.sets.join(", ")}] reps
+                {e.name}: {e.unit === "lbs" ? `${e.weight} lbs` : e.bandLevel || "band"} × [{e.sets.join(", ")}] reps
               </Text>
             ))}
           </View>
