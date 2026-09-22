@@ -19,7 +19,12 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Strength Tracker",
+      "shortName": "Strength",
+      "themeColor": "#1E2420",
+      "backgroundColor": "#F2F1EC",
+      "display": "standalone"
     },
     "plugins": ["expo-notifications"]
   }

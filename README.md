@@ -5,7 +5,32 @@ Sunday Pilates check-in, upper/lower/full-body workout logging, progressive
 overload prompts every 4 weeks, and history/progress views. Data is stored
 on-device with AsyncStorage — no backend, no account.
 
-## Getting started
+## Using it day-to-day (no computer required)
+
+The app auto-deploys as a website on every push, via
+`.github/workflows/deploy-web.yml` → GitHub Pages. Once Pages is enabled
+(one-time step below), it's live at:
+
+```
+https://clairejkelsey.github.io/Fitness-App/
+```
+
+Open that on your phone and use **Share → Add to Home Screen** (iOS Safari)
+to get a home-screen icon that opens full-screen, no browser chrome. After
+that, no laptop, dev server, or QR code — just tap the icon.
+
+**One-time setup** (GitHub doesn't allow enabling this from outside its UI):
+in the repo on github.com, go to **Settings → Pages**, and under "Build and
+deployment" set **Source** to **GitHub Actions**. The next push (or
+re-running the "Deploy web app to GitHub Pages" workflow from the Actions
+tab) will publish the site.
+
+Data lives in the browser's local storage on whichever phone you use it
+from — same one-device-only tradeoff as before, just no longer tied to
+Expo Go. The Sunday push notification does **not** work in the website
+version (see below).
+
+## Local development
 
 ```bash
 npm install
@@ -14,7 +39,9 @@ npx expo start
 
 Scan the QR code with the Expo Go app (iOS/Android) to run it on your phone,
 or press `a` / `i` in the terminal to launch an Android/iOS simulator. `npm
-run web` also works for a quick browser preview.
+run web` also works for a quick browser preview. This is only needed for
+making further changes — day-to-day use should go through the deployed
+website above.
 
 ## How it works
 
@@ -72,9 +99,11 @@ recommends given trimester-to-trimester changes.
 
 ## Sunday reminder notes
 
-- Local notifications work fine in Expo Go, but you do need to test on a
-  real device or simulator (not the web preview) to see the permission
-  prompt and confirm delivery.
+- Local notifications work fine in Expo Go (native), but **not** in the
+  deployed website — `expo-notifications` is a native module and silently
+  no-ops on web (see `src/notifications.ts`). If you want the Sunday
+  reminder back on the website, it'd need to be rebuilt as a web push
+  notification, which is a separate, not-yet-built feature.
 - The reminder time (Sunday, 9:00am, device-local time) is hardcoded in
   `src/notifications.ts` — change `REMINDER_HOUR/REMINDER_MINUTE` there if
   you want a different time.
@@ -82,6 +111,22 @@ recommends given trimester-to-trimester changes.
   `expo-notifications` config plugin in `app.json` is already wired up so
   the required Android permission gets added.
 
+## How the web deploy works
+
+- `npx expo export -p web` produces a static bundle in `dist/` — no server
+  code, it's just HTML/JS/CSS, so any static host works.
+- `scripts/patch-web-export.js` runs right after that export and rewrites
+  the two root-absolute asset URLs Expo generates (the JS bundle and
+  favicon) into relative ones, so the site works when hosted under a
+  subpath like GitHub Pages project sites (`/Fitness-App/...`) instead of
+  domain root. It also injects the PWA tags (`manifest.json` link,
+  `apple-touch-icon`, `apple-mobile-web-app-capable`) that this Expo
+  version's export doesn't generate on its own, since there's no
+  expo-router here to hook a custom HTML template into.
+- `public/` (manifest.json, apple-touch-icon.png) is copied verbatim into
+  every export by Expo automatically.
+
 ## Not yet built
 
-- Cross-device sync (data is local to whichever phone you use).
+- Cross-device sync (data is local to whichever phone/browser you use).
+- Web push notifications (the Sunday reminder is native-only right now).
