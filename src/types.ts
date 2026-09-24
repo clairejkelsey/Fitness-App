@@ -10,6 +10,9 @@ export interface ExerciseInfo {
   unit: Unit;
   /** Suggested starting weight (lbs) for an intermediate lifter, used to prefill before any history exists. */
   defaultWeight?: number;
+  /** Suggested rep range — doubles as the intensity cue for how heavy to load this exercise. */
+  repLow: number;
+  repHigh: number;
 }
 
 export interface ExerciseState {

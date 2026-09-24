@@ -62,6 +62,8 @@ export default function ExerciseSwapModal({
       equipment: equipment.trim() || "—",
       unit,
       category,
+      repLow: 8,
+      repHigh: 12,
     });
     reset();
   }

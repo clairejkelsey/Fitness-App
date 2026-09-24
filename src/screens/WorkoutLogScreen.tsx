@@ -130,6 +130,9 @@ export default function WorkoutLogScreen({
                       <Text style={styles.exerciseMeta}>
                         {info.muscle} · {info.equipment}
                       </Text>
+                      <Text style={[styles.repTarget, { color: meta.accent }]}>
+                        Target: {info.repLow}–{info.repHigh} reps
+                      </Text>
                     </View>
                     <TouchableOpacity onPress={() => setSwapTargetId(id)} style={styles.swapButton} hitSlop={8}>
                       <RefreshCw size={16} color={colors.inkSoft} />
@@ -224,6 +227,7 @@ const styles = StyleSheet.create({
   exerciseHeaderRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 12 },
   exerciseName: { fontWeight: "600", color: colors.ink, fontSize: 15 },
   exerciseMeta: { fontSize: 12, color: colors.inkSoft, marginTop: 2 },
+  repTarget: { fontSize: 12, marginTop: 3, fontWeight: "600" },
   swapButton: { padding: 4 },
   weightRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
   unitLabel: { fontSize: 13, color: colors.inkSoft },

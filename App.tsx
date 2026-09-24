@@ -119,8 +119,15 @@ export default function App() {
   function finishWorkout(dayType: DayType, entries: HistoryEntry[]) {
     if (!data.currentWeek) return;
     const exercises = { ...data.exercises };
+    const exerciseInfo = getAllExerciseInfo(data);
     entries.forEach((e) => {
-      exercises[e.id] = { weight: e.weight, bandLevel: e.bandLevel, repLow: 8, repHigh: 12 };
+      const info = exerciseInfo[e.id];
+      exercises[e.id] = {
+        weight: e.weight,
+        bandLevel: e.bandLevel,
+        repLow: info?.repLow ?? 8,
+        repHigh: info?.repHigh ?? 12,
+      };
     });
     const historyEntry = {
       date: toISODate(new Date()),

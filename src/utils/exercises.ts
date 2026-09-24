@@ -2,7 +2,18 @@ import { DAY_BLOCKS, EXERCISE_INFO } from "../data/exercises";
 import type { AppData, DayType, ExerciseBlock, ExerciseInfo } from "../types";
 
 export function getAllExerciseInfo(data: AppData): Record<string, ExerciseInfo> {
-  return { ...EXERCISE_INFO, ...(data.customExercises ?? {}) };
+  const custom = data.customExercises ?? {};
+  const normalizedCustom: Record<string, ExerciseInfo> = {};
+  // Custom exercises saved by an older build may predate repLow/repHigh —
+  // default them rather than rendering "undefined–undefined reps".
+  for (const [id, info] of Object.entries(custom)) {
+    normalizedCustom[id] = {
+      ...info,
+      repLow: info.repLow ?? 8,
+      repHigh: info.repHigh ?? 12,
+    };
+  }
+  return { ...EXERCISE_INFO, ...normalizedCustom };
 }
 
 function isValidBlockList(value: unknown): value is ExerciseBlock[] {
