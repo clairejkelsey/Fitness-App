@@ -11,10 +11,12 @@ interface Props {
   blocks: ExerciseBlock[];
   exerciseInfo: Record<string, ExerciseInfo>;
   existingExercises: Record<string, ExerciseState>;
+  hasCustomBlocks: boolean;
   onCancel: () => void;
   onFinish: (entries: HistoryEntry[]) => void;
   onSwapExercise: (oldId: string, newId: string) => void;
   onAddCustomExercise: (oldId: string, info: ExerciseInfo) => void;
+  onResetBlocks: () => void;
 }
 
 interface FormRow {
@@ -48,10 +50,12 @@ export default function WorkoutLogScreen({
   blocks,
   exerciseInfo,
   existingExercises,
+  hasCustomBlocks,
   onCancel,
   onFinish,
   onSwapExercise,
   onAddCustomExercise,
+  onResetBlocks,
 }: Props) {
   const ids = blocks.flatMap((b) => b.exerciseIds);
   const idsKey = ids.join(",");
@@ -123,6 +127,13 @@ export default function WorkoutLogScreen({
         </TouchableOpacity>
         <Text style={[styles.title, { color: meta.accent }]}>{meta.label}</Text>
         <Text style={styles.subtitle}>Suggested weights are a starting point — adjust to what feels right</Text>
+        {hasCustomBlocks && (
+          <TouchableOpacity onPress={onResetBlocks} style={styles.resetRow}>
+            <Text style={styles.resetText}>
+              Exercises customized for this day · <Text style={styles.resetLink}>Reset to defaults</Text>
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {blocks.map((block, blockIndex) => (
           <View key={block.label + blockIndex} style={styles.block}>
@@ -225,6 +236,9 @@ const styles = StyleSheet.create({
   backLabel: { fontSize: 14, color: colors.inkSoft },
   title: { fontSize: 24, fontWeight: "700" },
   subtitle: { color: colors.inkSoft, fontSize: 14, marginBottom: 20 },
+  resetRow: { marginTop: -12, marginBottom: 20 },
+  resetText: { fontSize: 12, color: colors.inkSoft },
+  resetLink: { color: colors.clay, fontWeight: "600" },
   block: { marginBottom: 10 },
   blockHeader: { marginBottom: 10 },
   blockLabel: { fontSize: 15, fontWeight: "700" },

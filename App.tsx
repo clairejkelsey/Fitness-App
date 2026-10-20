@@ -177,6 +177,13 @@ export default function App() {
     persist({ ...data, customExercises, dayExercises });
   }
 
+  function resetDayBlocks(dayType: DayType) {
+    if (!data.dayExercises || !(dayType in data.dayExercises)) return;
+    const dayExercises = { ...data.dayExercises };
+    delete dayExercises[dayType];
+    persist({ ...data, dayExercises });
+  }
+
   let content: React.ReactNode;
 
   if (loading) {
@@ -201,6 +208,7 @@ export default function App() {
         blocks={getDayBlocks(data, activeDayType)}
         exerciseInfo={getAllExerciseInfo(data)}
         existingExercises={data.exercises}
+        hasCustomBlocks={Boolean(data.dayExercises?.[activeDayType])}
         onCancel={() => {
           setActiveDayType(null);
           setView("home");
@@ -208,6 +216,7 @@ export default function App() {
         onFinish={(entries) => finishWorkout(activeDayType, entries)}
         onSwapExercise={(oldId, newId) => swapExercise(activeDayType, oldId, newId)}
         onAddCustomExercise={(oldId, info) => addCustomExerciseAndSwap(activeDayType, oldId, info)}
+        onResetBlocks={() => resetDayBlocks(activeDayType)}
       />
     );
   } else if (view === "history") {
