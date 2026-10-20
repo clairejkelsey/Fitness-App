@@ -1,4 +1,4 @@
-export type Unit = "lbs" | "band";
+export type Unit = "lbs" | "band" | "bodyweight";
 export type Category = "upper" | "lower";
 export type DayType = "upper" | "lower" | "full";
 

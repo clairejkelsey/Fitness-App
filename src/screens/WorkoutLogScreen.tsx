@@ -27,12 +27,20 @@ function initialRow(id: string, info: ExerciseInfo | undefined, existingExercise
   let weight = "";
   if (info?.unit === "band") {
     weight = existing?.bandLevel ?? "";
-  } else if (existing?.weight != null) {
-    weight = String(existing.weight);
-  } else if (info?.defaultWeight != null) {
-    weight = String(info.defaultWeight);
+  } else if (info?.unit === "lbs") {
+    if (existing?.weight != null) {
+      weight = String(existing.weight);
+    } else if (info?.defaultWeight != null) {
+      weight = String(info.defaultWeight);
+    }
   }
   return { weight, reps: ["", "", ""] };
+}
+
+function blockHint(count: number): string {
+  if (count <= 1) return "3 sets, resting between";
+  if (count === 2) return "Superset · alternate, rest after both";
+  return `Circuit of ${count} · cycle through all, rest after a full round`;
 }
 
 export default function WorkoutLogScreen({
@@ -83,9 +91,14 @@ export default function WorkoutLogScreen({
       const info = exerciseInfo[id];
       const row = form[id];
       if (!info || !row) return;
+      const sets = row.reps.filter((r) => r !== "").map((r) => parseInt(r, 10));
+      if (info.unit === "bodyweight") {
+        if (sets.length === 0) return;
+        entries.push({ id, name: info.name, weight: null, unit: info.unit, sets });
+        return;
+      }
       const raw = row.weight.trim();
       if (raw === "") return;
-      const sets = row.reps.filter((r) => r !== "").map((r) => parseInt(r, 10));
       if (info.unit === "lbs") {
         const num = parseFloat(raw);
         if (isNaN(num)) return;
@@ -115,7 +128,7 @@ export default function WorkoutLogScreen({
           <View key={block.label + blockIndex} style={styles.block}>
             <View style={styles.blockHeader}>
               <Text style={[styles.blockLabel, { color: meta.accent }]}>{block.label}</Text>
-              <Text style={styles.blockHint}>Superset · alternate, rest after both</Text>
+              <Text style={styles.blockHint}>{blockHint(block.exerciseIds.length)}</Text>
             </View>
 
             {block.exerciseIds.map((id) => {
@@ -151,7 +164,7 @@ export default function WorkoutLogScreen({
                       />
                       <Text style={styles.unitLabel}>lbs</Text>
                     </View>
-                  ) : (
+                  ) : info.unit === "band" ? (
                     <TextInput
                       placeholder="Band level (e.g. medium / blue)"
                       placeholderTextColor={colors.placeholder}
@@ -159,7 +172,7 @@ export default function WorkoutLogScreen({
                       onChangeText={(v) => updateWeight(id, v)}
                       style={[styles.input, styles.fullWidthInput]}
                     />
-                  )}
+                  ) : null}
 
                   <View style={styles.repsRow}>
                     {[0, 1, 2].map((i) => (

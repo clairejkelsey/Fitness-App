@@ -131,8 +131,9 @@ export default function ExerciseSwapModal({
               />
               <Text style={styles.fieldLabel}>Tracked as</Text>
               <View style={styles.toggleRow}>
-                <ToggleButton active={unit === "lbs"} onPress={() => setUnit("lbs")} label="Weight (lbs)" />
-                <ToggleButton active={unit === "band"} onPress={() => setUnit("band")} label="Band level" />
+                <ToggleButton active={unit === "lbs"} onPress={() => setUnit("lbs")} label="Weight" />
+                <ToggleButton active={unit === "band"} onPress={() => setUnit("band")} label="Band" />
+                <ToggleButton active={unit === "bodyweight"} onPress={() => setUnit("bodyweight")} label="Bodyweight" />
               </View>
               {defaultCategory === null && (
                 <>

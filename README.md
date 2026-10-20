@@ -49,16 +49,19 @@ website above.
   3 days → upper/lower/full-body strength, 4 days → upper/lower only.
 - **Progressive overload**: every 4th week, a second check-in step asks
   separately whether to add 5 lbs to upper and lower working weights.
-- **Workout logging**: exercises are grouped into supersets of 2 by shared
-  muscle overlap (e.g. bench press + shoulder press are both "push" and
-  grouped together, not split across blocks) instead of one long list —
-  alternate between the pair, then rest. Each exercise shows a target rep
-  range (lower for heavy barbell compounds, higher for isolation/band
+- **Workout logging**: exercises are grouped into blocks by single muscle
+  group (Chest, Back, Shoulders, Arms & Rear Delts, Legs) — a Peloton
+  strength-class style (think Sandy Brockman / Adrian Williams / Tunde
+  Oyeneyin), 2-3 exercises hitting the same muscle done as a circuit
+  (cycle through all of them, rest after a full round) instead of one
+  long list or antagonist pairs. Each exercise shows a target rep range
+  (lower for heavy barbell compounds, higher for isolation/bodyweight/band
   work) as the cue for how heavy to load it: can't hit the bottom of the
   range, drop weight; top of the range is easy, add weight next time.
   Weight per exercise is prefilled from your last session, or a generic
   intermediate-lifter starting suggestion the first time; band-based
-  exercises take a text "band level" instead of a weight.
+  exercises take a text "band level" and bodyweight exercises (push-ups)
+  just track reps — neither needs a weight entered.
 - **History and Progress tabs**: a log of past sessions and a simple bar
   trend per lifted exercise.
 - **Exercise substitution**: tap the swap icon on any exercise during a
