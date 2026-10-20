@@ -55,7 +55,7 @@ export const DAY_BLOCKS: Record<DayType, ExerciseBlock[]> = {
   full: [
     { label: "Legs", exerciseIds: ["goblet_squat", "barbell_rdl"] },
     { label: "Chest", exerciseIds: ["db_bench_press", "pushups"] },
-    { label: "Shoulders", exerciseIds: ["db_shoulder_press", "db_lateral_raise"] },
+    { label: "Shoulders & Legs", exerciseIds: ["db_shoulder_press", "db_lateral_raise", "db_walking_lunge"] },
     { label: "Back", exerciseIds: ["cable_seated_row", "band_pull_apart"] },
   ],
 };
